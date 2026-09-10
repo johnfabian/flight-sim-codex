@@ -2,6 +2,8 @@
 
 A cinematic, playable browser flight game set in the fictional Pelagos archipelago. Built with TypeScript, Three.js, and Vite. The aircraft, terrain, trees, clouds, airfield, water, and checkpoint rings are generated in code.
 
+![AERONAUT gameplay: flying above the Pelagos archipelago toward an island expedition checkpoint](docs/screenshots/flight.png)
+
 ## Run locally
 
 Requires Node.js 22.12+ or 24+.
