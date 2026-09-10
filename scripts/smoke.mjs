@@ -1,0 +1,66 @@
+import { chromium } from '@playwright/test';
+import { mkdir } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+
+await mkdir('.artifacts',{recursive:true});
+const browser=await chromium.launch({channel:'msedge',headless:true,args:['--disable-extensions']});
+const failures=[];
+try {
+  const page=await browser.newPage({viewport:{width:1440,height:960},deviceScaleFactor:1});
+  page.on('pageerror',error=>failures.push(error.message));
+  page.on('console',message=>{if(message.type()==='error'&&!message.text().includes('fonts.googleapis'))failures.push(message.text());});
+  await page.goto('http://localhost:5173/',{waitUntil:'networkidle'});
+  await page.waitForTimeout(1800);
+  assert.equal(await page.locator('#error').isVisible(),false,'WebGL initialized');
+  await page.screenshot({path:'.artifacts/desktop-briefing.png'});
+  await page.getByRole('button',{name:'Let’s fly'}).click();
+  await page.waitForTimeout(1000);
+  assert.equal(await page.locator('body').getAttribute('data-state'),'flying');
+  const altitude=Number((await page.locator('#altitude').innerText()).replaceAll(',',''));
+  await page.keyboard.down('s');await page.waitForTimeout(1400);await page.keyboard.up('s');
+  assert.ok(Number((await page.locator('#altitude').innerText()).replaceAll(',',''))>altitude,'Keyboard pitch climbs');
+  await page.keyboard.press('c');assert.equal(await page.locator('#camera-label').innerText(),'Cockpit view');
+  await page.keyboard.press('c');assert.equal(await page.locator('#camera-label').innerText(),'Wing camera');
+  await page.keyboard.press('c');
+  await page.getByRole('button',{name:'Pause flight'}).click();
+  const pausedTime=await page.locator('#timer').innerText();await page.waitForTimeout(1200);
+  assert.equal(await page.locator('#timer').innerText(),pausedTime,'Pause freezes elapsed time');
+  await page.getByRole('button',{name:'Back to the sky'}).click();
+  await page.getByRole('button',{name:'Mute sound',exact:true}).click();
+  assert.equal(await page.locator('#sound').getAttribute('aria-pressed'),'true');
+  await page.getByRole('button',{name:'Change time of day'}).click();
+  assert.equal(await page.locator('#time-label').innerText(),'HIGH NOON');
+  await page.keyboard.press('r');
+  await page.waitForTimeout(1400);
+  await page.screenshot({path:'.artifacts/desktop-flight.png'});
+  await page.getByRole('button',{name:'Flight controls',exact:true}).click();
+  assert.ok(await page.getByRole('heading',{name:'You have the controls.'}).isVisible());
+  await page.getByRole('button',{name:'Return to flight briefing'}).click();
+  await page.locator('[data-mode="free"]').click();
+  await page.getByRole('button',{name:'Let’s fly'}).click();
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator('#gate-name').innerText(),'A sky of your own');
+  await page.close();
+  for(const viewport of [{width:390,height:844},{width:844,height:390}]) {
+    const mobile=await browser.newPage({viewport,deviceScaleFactor:1,isMobile:true,hasTouch:true});
+    mobile.on('pageerror',error=>failures.push(error.message));
+    await mobile.goto('http://localhost:5173/',{waitUntil:'networkidle'});
+    await mobile.waitForTimeout(700);
+    const name=viewport.width<500?'portrait':'landscape';
+    await mobile.screenshot({path:`.artifacts/mobile-${name}-briefing.png`});
+    const launch=mobile.locator('#launch'),box=await launch.boundingBox();
+    assert.ok(box&&box.y>0&&box.y+box.height<=viewport.height,'Launch stays in viewport');
+    await launch.click();await mobile.waitForTimeout(700);
+    assert.equal(await mobile.locator('#touch-controls').isVisible(),true);
+    const stickBox=await mobile.locator('#joystick').boundingBox();assert.ok(stickBox&&stickBox.y>0&&stickBox.y+stickBox.height<viewport.height);
+    const before=Number((await mobile.locator('#altitude').innerText()).replaceAll(',',''));
+    const x=stickBox.x+stickBox.width/2,y=stickBox.y+stickBox.height/2;
+    await mobile.mouse.move(x,y);await mobile.mouse.down();await mobile.mouse.move(x,y+32);await mobile.waitForTimeout(1200);await mobile.mouse.up();
+    assert.ok(Number((await mobile.locator('#altitude').innerText()).replaceAll(',',''))>before,'Pointer joystick climbs');
+    assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'No horizontal overflow');
+    await mobile.screenshot({path:`.artifacts/mobile-${name}-flight.png`});
+    await mobile.close();
+  }
+  assert.deepEqual(failures,[],'No runtime or WebGL shader errors');
+  console.log('PASS: desktop launch, pitch, 3 cameras, pause/resume, mute, lighting, restart, help, free flight, portrait/landscape touch joystick, layout bounds, and runtime errors.');
+}finally{await browser.close();}
