@@ -2,6 +2,8 @@
 
 A cinematic, playable browser flight game set in the fictional Pelagos archipelago. Built with TypeScript, Three.js, and Vite. The aircraft, terrain, trees, clouds, airfield, water, and checkpoint rings are generated in code.
 
+**[Play AERONAUT](https://johnfabian.github.io/flight-sim-codex/)** — open the link, choose a flight, and select **Let’s fly**. No installation or account required. Keyboard and touch controls are supported.
+
 ![AERONAUT gameplay: flying above the Pelagos archipelago toward an island expedition checkpoint](docs/screenshots/flight.png)
 
 ## Run locally
@@ -48,6 +50,10 @@ Release steering to gently return to level flight. Climb before the mountain che
 ## Build and hosting
 
 `npm run build` produces a static `dist/` directory. Serve it with any static HTTPS host. No backend, API keys, account, Docker, or runtime model service is needed. Optional Google Fonts fall back to system fonts when unavailable. All game assets and dependencies are bundled locally.
+
+GitHub Pages publishes at https://johnfabian.github.io/flight-sim-codex/. The `Deploy game to GitHub Pages` workflow tests, builds, and deploys updates pushed to `main`; it can also be run manually from Actions. Repository Settings → Pages must use **GitHub Actions** as its source. Relative build asset paths keep the game working under the repository URL and on other static hosts.
+
+To run the existing desktop/mobile smoke checks against a production preview or the live site, set `SMOKE_BASE_URL` to its full URL before running `npm run test:smoke`. Microsoft Edge is required. See [the deployment plan](docs/DEPLOYMENT.md) for release verification and rollback.
 
 An optional Docker configuration serves the production build on port 8080:
 

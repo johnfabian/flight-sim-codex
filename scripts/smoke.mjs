@@ -3,13 +3,14 @@ import { mkdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 await mkdir('.artifacts',{recursive:true});
+const baseURL=process.env.SMOKE_BASE_URL||'http://localhost:5173/';
 const browser=await chromium.launch({channel:'msedge',headless:true,args:['--disable-extensions']});
 const failures=[];
 try {
   const page=await browser.newPage({viewport:{width:1440,height:960},deviceScaleFactor:1});
   page.on('pageerror',error=>failures.push(error.message));
   page.on('console',message=>{if(message.type()==='error'&&!message.text().includes('fonts.googleapis'))failures.push(message.text());});
-  await page.goto('http://localhost:5173/',{waitUntil:'networkidle'});
+  await page.goto(baseURL,{waitUntil:'networkidle'});
   await page.waitForTimeout(1800);
   assert.equal(await page.locator('#error').isVisible(),false,'WebGL initialized');
   await page.screenshot({path:'.artifacts/desktop-briefing.png'});
@@ -44,7 +45,7 @@ try {
   for(const viewport of [{width:390,height:844},{width:844,height:390}]) {
     const mobile=await browser.newPage({viewport,deviceScaleFactor:1,isMobile:true,hasTouch:true});
     mobile.on('pageerror',error=>failures.push(error.message));
-    await mobile.goto('http://localhost:5173/',{waitUntil:'networkidle'});
+    await mobile.goto(baseURL,{waitUntil:'networkidle'});
     await mobile.waitForTimeout(700);
     const name=viewport.width<500?'portrait':'landscape';
     await mobile.screenshot({path:`.artifacts/mobile-${name}-briefing.png`});
