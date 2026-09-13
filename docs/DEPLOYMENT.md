@@ -27,4 +27,7 @@ Revert the faulty source commit on main and push the revert. The workflow rebuil
 - All 13 simulation tests pass on Node 24.
 - TypeScript checks and the production build pass; HTML references relative bundled assets and favicon. Vite reports its existing Three.js bundle-size advisory (approximately 140 KB gzipped JavaScript).
 - Production preview passes desktop launch, climb, camera changes, pause/resume, mute, lighting, restart, help, free flight, and portrait/landscape emulated touch checks with no runtime or shader errors. The initial sandbox run blocked an optional font request; the network-enabled run passes.
-- Public deployment and live gameplay verification pending.
+- GitHub Actions [release run 34731044460](https://github.com/johnfabian/flight-sim-codex/actions/runs/34731044460) successfully built and deployed commit `35a90424543e71ab13ac56cafeba0f1171b408a0`.
+- The public HTTPS page, favicon, JavaScript, and stylesheet all return HTTP 200.
+- The same desktop and portrait/landscape emulated touch smoke checks pass against https://johnfabian.github.io/flight-sim-codex/ with no runtime or shader errors.
+- The existing root homepage repository was not modified. Physical phone testing remains outside this release's automated checks.
